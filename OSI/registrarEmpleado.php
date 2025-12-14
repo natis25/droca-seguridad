@@ -19,7 +19,7 @@ header(
     "style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'unsafe-inline'; ".
     "font-src https://fonts.gstatic.com; ".
     "script-src 'self' https://cdn.jsdelivr.net 'nonce-{$CSP_NONCE}'; ".
-    "connect-src 'self' https://cdn.jsdelivr.net;" // Añadido connect-src
+    "connect-src 'self' https://cdn.jsdelivr.net;"
 );
 
 // ---- Conexión a la BD para obtener cargos y roles ----
@@ -110,19 +110,24 @@ if (empty($roles)) {
             <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf']) ?>">
 
             <div class="row g-3">
-                <div class="col-md-6">
+                <!-- 🔧 CAMBIO: Ahora son 3 columnas para incluir Apellido2 -->
+                <div class="col-md-4">
                     <label class="form-label">Nombre</label>
                     <input name="nombre" maxlength="100" class="form-control" placeholder="Nombre del empleado" required autocomplete="given-name">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Apellido</label>
-                    <input name="apellido" maxlength="100" class="form-control" placeholder="Apellido del empleado" required autocomplete="family-name">
+                <div class="col-md-4">
+                    <label class="form-label">Primer Apellido</label>
+                    <input name="apellido" maxlength="100" class="form-control" placeholder="Primer apellido" required autocomplete="family-name">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Segundo Apellido</label>
+                    <input name="apellido2" maxlength="100" class="form-control" placeholder="Segundo apellido" required autocomplete="additional-name">
                 </div>
 
                 <div class="col-12">
                     <label class="form-label">Usuario Sugerido</label>
-                    <input name="usuario" id="usuario" maxlength="100" class="form-control" placeholder="usuario.unico (editable)" autocapitalize="none" autocomplete="username">
-                    <small class="text-muted">Generado automáticamente (puedes editarlo si deseas).</small>
+                    <input name="usuario" id="usuario" maxlength="100" class="form-control" placeholder="usuario.apellido (editable)" autocapitalize="none" autocomplete="username">
+                    <small class="text-muted">Generado automáticamente como: nombre.apellido1.apellido2 (puedes editarlo si deseas).</small>
                 </div>
 
                 <div class="col-12">
@@ -135,10 +140,6 @@ if (empty($roles)) {
                     <label class="form-label">Teléfono (8 dígitos)</label>
                     <input name="telefono" pattern="\d{8}" maxlength="8" class="form-control" placeholder="12345678" required inputmode="numeric" autocomplete="tel">
                 </div>
-                <!--<div class="col-md-6">
-                    <label class="form-label">Dirección</label>
-                    <input name="direccion" maxlength="150" class="form-control" placeholder="Calle, número, ciudad" required autocomplete="street-address">
-                </div> Direccion*/-->
 
                 <div class="col-md-6">
                     <label class="form-label">Cargo</label>
@@ -149,6 +150,7 @@ if (empty($roles)) {
                         <?php endforeach; ?>
                     </select>
                 </div>
+                
                 <div class="col-md-6">
                     <label class="form-label">Rol</label>
                     <select name="idRol" class="form-control" required>
@@ -200,35 +202,67 @@ if (empty($roles)) {
 </footer>
 
 <script nonce="<?= $CSP_NONCE ?>">
-// --- Generación automática y dinámica del usuario y correo ---
+// 🔧 --- Generación automática y dinámica del usuario y correo (CON APELLIDO2) ---
 const nombre = document.querySelector('input[name="nombre"]');
 const apellido = document.querySelector('input[name="apellido"]');
+const apellido2 = document.querySelector('input[name="apellido2"]'); // 🆕 NUEVO
 const usuario = document.getElementById('usuario');
 const correo = document.getElementById('correo');
 let usuarioModificado = false;
 
-function toASCII(s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/gi, 'n'); }
-function norm(s) { return toASCII(s).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').trim().replace(/\s+/g, ' '); }
+function toASCII(s) { 
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/gi, 'n'); 
+}
+
+function norm(s) { 
+    return toASCII(s).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').trim().replace(/\s+/g, ' '); 
+}
 
 function sugerirUsuario() {
-    if (usuarioModificado) return; // No sobrescribir si el usuario edita
+    if (usuarioModificado) return; // No sobrescribir si el usuario edita manualmente
+    
     const n = (norm(nombre.value).split(' ')[0] || '').replace(/[^a-z]/g, '');
-    const a = (norm(apellido.value).split(' ').slice(-1)[0] || '').replace(/[^a-z]/g, '');
-    const user = n && a ? `${n}.${a}` : (n || a || '');
+    const a1 = (norm(apellido.value).split(' ')[0] || '').replace(/[^a-z]/g, '');
+    const a2 = (norm(apellido2.value).split(' ')[0] || '').replace(/[^a-z]/g, ''); // 🆕 NUEVO
+    
+    // 🔧 Generar usuario como: nombre.apellido1.apellido2
+    let user = '';
+    if (n && a1 && a2) {
+        user = `${n}.${a1}.${a2}`;
+    } else if (n && a1) {
+        user = `${n}.${a1}`;
+    } else if (n) {
+        user = n;
+    } else if (a1) {
+        user = a1;
+    }
+    
     usuario.value = user;
     correo.value = user ? `${user}@droca.com` : '';
 }
+
+// 🔧 Event listeners para los 3 campos
 nombre.addEventListener('input', sugerirUsuario);
 apellido.addEventListener('input', sugerirUsuario);
+apellido2.addEventListener('input', sugerirUsuario); // 🆕 NUEVO
+
 usuario.addEventListener('input', () => {
     usuarioModificado = true;
     correo.value = usuario.value ? `${usuario.value}@droca.com` : '';
 });
 
 // --- Medidor de contraseña ---
-const pwd = document.getElementById('password'), pwBar = document.getElementById('pwBar'), pwLabel = document.getElementById('pwLabel');
-const reqs = { len: rq('req_len'), may: rq('req_may'), min: rq('req_min'), num: rq('req_num'), sym: rq('req_sym') };
-function rq(id) { return document.getElementById(id); }
+const pwd = document.getElementById('password');
+const pwBar = document.getElementById('pwBar');
+const pwLabel = document.getElementById('pwLabel');
+const reqs = { 
+    len: document.getElementById('req_len'), 
+    may: document.getElementById('req_may'), 
+    min: document.getElementById('req_min'), 
+    num: document.getElementById('req_num'), 
+    sym: document.getElementById('req_sym') 
+};
+
 function evalPwd(v) {
     const r = {
         len: v.length >= 12,
@@ -237,11 +271,16 @@ function evalPwd(v) {
         num: /\d/.test(v),
         sym: /[^A-Za-z0-9]/.test(v)
     };
+    
     let s = Object.values(r).filter(Boolean).length;
     pwBar.style.width = (s * 20) + '%';
     pwLabel.textContent = ['Muy débil', 'Débil', 'Media', 'Buena', 'Fuerte', 'Excelente'][s];
-    for (const k in r) { reqs[k].className = r[k] ? 'req-ok' : 'req-bad'; }
+    
+    for (const k in r) { 
+        reqs[k].className = r[k] ? 'req-ok' : 'req-bad'; 
+    }
 }
+
 pwd.addEventListener('input', e => evalPwd(e.target.value));
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" nonce="<?= $CSP_NONCE ?>"></script>
