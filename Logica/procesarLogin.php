@@ -12,6 +12,7 @@ if (file_exists(__DIR__ . '/../.env')) {
 include('sql.php');
 include('CAPTCHA.php');
 require_once '../SecurityLogger.php';
+require_once __DIR__ . '/csrf_helpers.php';
 
 session_start();
 
@@ -32,6 +33,9 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit();
 }
 
+// Validar token CSRF
+csrf_validate_or_die('../login.php', 'Token de seguridad inválido. Por favor, intenta nuevamente.');
+
 $usuario = trim($_POST["usuario"]);
 $password = trim($_POST["password"]);
 
@@ -49,7 +53,7 @@ if (empty($captcha_result["success"]) || !$captcha_result["success"]) {
     echo "<script>alert('⚠️ Verificación CAPTCHA fallida');</script>";
     var_dump($captcha_result);
 } else if ($captcha_result && isset($captcha_result['success']) && $captcha_result['success'] === true) {
-    
+
     // Buscar en trabajador
     $sql_trabajador = "
         SELECT t.idTrabajador AS id, t.Nombre, t.Apellido, t.Usuario, ph.PasswordHash, t.idRol, t.EstadoCuenta, t.IntentosFallidos
@@ -113,7 +117,7 @@ if (empty($captcha_result["success"]) || !$captcha_result["success"]) {
         if ($user_found['EstadoCuenta'] === 'Bloqueado') {
             // LOG: Intento de acceso con cuenta bloqueada
             $secLogger->logIntentoAccesoBloqueado($usuario);
-            
+
             $_SESSION['error'] = "Tu cuenta está bloqueada. Contacta al administrador.";
             $conn->close();
             header("Location: ../login.php");
@@ -142,14 +146,14 @@ if (empty($captcha_result["success"]) || !$captcha_result["success"]) {
             $conn->close();
             header("Location: ../OSI/panelControlOSI.php");
             exit();
-            
+
         } else {
             // ❌ LOGIN FALLIDO
             $intentos = $user_found['IntentosFallidos'] + 1;
-            
+
             // LOG: Login fallido
             $secLogger->logLoginFallido($usuario, $intentos);
-            
+
             // Actualizar intentos fallidos
             $update_intentos = "UPDATE {$user_type} SET IntentosFallidos = IntentosFallidos + 1 WHERE id" . ucfirst($user_type) . " = ?";
             if ($stmt_update = $conn->prepare($update_intentos)) {
@@ -157,7 +161,7 @@ if (empty($captcha_result["success"]) || !$captcha_result["success"]) {
                 $stmt_update->execute();
                 $stmt_update->close();
             }
-            
+
             // Bloquear si alcanzó 3 intentos
             if ($intentos >= 3) {
                 $update_bloqueo = "UPDATE {$user_type} SET EstadoCuenta = 'Bloqueado', locked_at = NOW() WHERE id" . ucfirst($user_type) . " = ?";
@@ -166,15 +170,15 @@ if (empty($captcha_result["success"]) || !$captcha_result["success"]) {
                     $stmt_bloqueo->execute();
                     $stmt_bloqueo->close();
                 }
-                
+
                 // LOG: Cuenta bloqueada
                 $secLogger->logCuentaBloqueada($usuario);
-                
+
                 $_SESSION['error'] = "Tu cuenta ha sido bloqueada por múltiples intentos fallidos. Contacta al administrador.";
             } else {
                 $_SESSION['error'] = "❌ Datos ingresados incorrectos. Intentos restantes: " . (3 - $intentos);
             }
-            
+
             $conn->close();
             header("Location: ../login.php");
             exit();
@@ -183,7 +187,7 @@ if (empty($captcha_result["success"]) || !$captcha_result["success"]) {
         // Usuario no encontrado
         // LOG: Login fallido (usuario no existe)
         $secLogger->logLoginFallido($usuario, 1);
-        
+
         $_SESSION['error'] = "❌ El Usuario no está registrado.";
         $conn->close();
         header("Location: ../login.php");

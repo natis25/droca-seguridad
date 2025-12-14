@@ -57,7 +57,11 @@
 <body>
 
     <!-- Navbar -->
-    <?php include('header.php'); ?>
+    <?php
+    require_once __DIR__ . '/Logica/csrf_helpers.php';
+    csrf_generate_token();
+    include('header.php');
+    ?>
 
     <div class="form-container">
         <div class="card">
@@ -66,14 +70,17 @@
             </div>
             <div class="form-panel">
                 <form method="POST" action="Logica/setVivienda.php" onsubmit="return validarMonto();">
+                    <?php echo csrf_field(); ?>
                     <div class="form-group">
                         <label for="direccion">Dirección</label>
-                        <input type="text" class="form-control" id="direccion" name="direccion" placeholder="Ingresa la dirección" required>
+                        <input type="text" class="form-control" id="direccion" name="direccion"
+                            placeholder="Ingresa la dirección" required>
                     </div>
 
                     <div class="form-group">
                         <label for="monto">Monto Solicitado</label>
-                        <input type="number" class="form-control" id="monto" name="monto" placeholder="Ingresa el monto solicitado" step="0.01" min="0" required>
+                        <input type="number" class="form-control" id="monto" name="monto"
+                            placeholder="Ingresa el monto solicitado" step="0.01" min="0" required>
                     </div>
 
                     <div class="form-group">

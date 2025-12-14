@@ -19,6 +19,11 @@ if (isset($_GET['token'])) {
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
+        // Incluir helpers de CSRF para generar el token
+        require_once __DIR__ . '/csrf_helpers.php';
+        csrf_generate_token();
+        $csrf_field = csrf_field();
+
         echo '
         <!DOCTYPE html>
         <html lang="es">
@@ -72,6 +77,7 @@ if (isset($_GET['token'])) {
         </head>
         <body>
         <form action="resetPassword.php" method="POST">
+            ' . $csrf_field . '
             <input type="hidden" name="token" value="' . htmlspecialchars($token) . '">
             <h2>Restablecer contraseña</h2>
             <input type="password" name="password" placeholder="Nueva contraseña" required><br><br>
@@ -85,6 +91,15 @@ if (isset($_GET['token'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Incluir helpers de CSRF para validar
+    require_once __DIR__ . '/csrf_helpers.php';
+
+    // Validar token CSRF
+    if (!csrf_validate()) {
+        echo "<script>alert('❌ Token de seguridad inválido.'); window.location='../recover.php';</script>";
+        exit();
+    }
+
     try {
         $token = $_POST['token'];
         $hashedPassword = password_hash($_POST['password'], PASSWORD_DEFAULT);

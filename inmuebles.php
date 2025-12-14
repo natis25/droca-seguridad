@@ -1,17 +1,23 @@
-<?php include('header.php'); ?>
+<?php
+require_once __DIR__ . '/Logica/csrf_helpers.php';
+csrf_generate_token();
+include('header.php');
+?>
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Viviendas Disponibles</title>
-  
+
   <!-- Bootstrap -->
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
   <!-- Fuentes Google -->
-  <link href="https://fonts.googleapis.com/css2?family=Overlock:wght@700&family=Roboto:wght@300&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Overlock:wght@700&family=Roboto:wght@300&display=swap"
+    rel="stylesheet">
 
   <style>
     body {
@@ -86,18 +92,19 @@
     }
   </style>
 </head>
+
 <body>
 
   <hr>
 
   <div class="grid-container">
-  <?php
-include('Logica/sql.php'); 
+    <?php
+    include('Logica/sql.php');
 
-$viviendas = obtenerViviendasDisponibles();
+    $viviendas = obtenerViviendasDisponibles();
 
-if (!empty($viviendas)) {
-    foreach ($viviendas as $index => $fila) {
+    if (!empty($viviendas)) {
+      foreach ($viviendas as $index => $fila) {
         echo "<div class='card'>";
         echo "<h2>{$fila['Direccion']}</h2>";
         echo "<p><strong>Tipo:</strong> {$fila['TipoVivienda']}</p>";
@@ -109,12 +116,14 @@ if (!empty($viviendas)) {
         echo "</div>";
 
         // Modal para agendar cita
+        $csrf_token = htmlspecialchars(csrf_get_token(), ENT_QUOTES, 'UTF-8');
         echo "
         <div class='modal' id='modal-$index'>
           <div class='modal-content'>
             <span class='close-btn' onclick='closeModal($index)'>&times;</span>
             <h3>Agendar Cita</h3>
             <form method='POST' action='Logica/setCita.php' id='form-$index'>
+              <input type='hidden' name='csrf' value='{$csrf_token}'>
               <div class='form-group'>
                 <label for='nombre-$index'>Nombre:</label>
                 <input type='text' class='form-control' id='nombre-$index' name='nombre' required>
@@ -143,33 +152,33 @@ if (!empty($viviendas)) {
             </form>
           </div>
         </div>";
+      }
+    } else {
+      echo "<p>No hay viviendas disponibles en este momento.</p>";
     }
-} else {
-    echo "<p>No hay viviendas disponibles en este momento.</p>";
-}
-?>
+    ?>
 
   </div>
 
   <script>
     function validarFormulario(index) {
-        const formulario = document.getElementById(`form-${index}`);
-        const botonEnviar = document.getElementById(`submit-${index}`);
-        const esValido = formulario.checkValidity();
-        botonEnviar.disabled = !esValido;
+      const formulario = document.getElementById(`form-${index}`);
+      const botonEnviar = document.getElementById(`submit-${index}`);
+      const esValido = formulario.checkValidity();
+      botonEnviar.disabled = !esValido;
     }
 
     document.querySelectorAll('form').forEach((form, index) => {
-        form.querySelectorAll('input').forEach((input) => {
-            input.addEventListener('input', () => validarFormulario(index));
-        });
+      form.querySelectorAll('input').forEach((input) => {
+        input.addEventListener('input', () => validarFormulario(index));
+      });
     });
 
     window.addEventListener('load', () => {
-        const fechaInputs = document.querySelectorAll('input[type="date"]');
-        fechaInputs.forEach((input) => {
-            input.setAttribute('min', new Date().toISOString().split('T')[0]);
-        });
+      const fechaInputs = document.querySelectorAll('input[type="date"]');
+      fechaInputs.forEach((input) => {
+        input.setAttribute('min', new Date().toISOString().split('T')[0]);
+      });
     });
 
     function openModal(index) {
@@ -182,4 +191,5 @@ if (!empty($viviendas)) {
   </script>
 
 </body>
+
 </html>

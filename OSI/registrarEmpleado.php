@@ -3,7 +3,9 @@
 ini_set('session.cookie_httponly', '1');
 ini_set('session.cookie_samesite', 'Lax');
 session_start();
-if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(32)); }
+if (empty($_SESSION['csrf'])) {
+    $_SESSION['csrf'] = bin2hex(random_bytes(32));
+}
 session_regenerate_id(true);
 
 // ---- CSP con NONCE para permitir <script> inline seguro ----
@@ -13,12 +15,12 @@ header("X-Content-Type-Options: nosniff");
 header("Referrer-Policy: strict-origin-when-cross-origin");
 header("Permissions-Policy: interest-cohort=()");
 header(
-    "Content-Security-Policy: ".
-    "default-src 'self'; ".
-    "img-src 'self' data:; ".
-    "style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'unsafe-inline'; ".
-    "font-src https://fonts.gstatic.com; ".
-    "script-src 'self' https://cdn.jsdelivr.net 'nonce-{$CSP_NONCE}'; ".
+    "Content-Security-Policy: " .
+    "default-src 'self'; " .
+    "img-src 'self' data:; " .
+    "style-src 'self' https://fonts.googleapis.com https://cdn.jsdelivr.net 'nonce-{$CSP_NONCE}'; " .
+    "font-src https://fonts.gstatic.com; " .
+    "script-src 'self' https://cdn.jsdelivr.net 'nonce-{$CSP_NONCE}'; " .
     "connect-src 'self' https://cdn.jsdelivr.net;"
 );
 
@@ -56,233 +58,285 @@ if (empty($roles)) {
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Crear Cuenta de Empleado</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --brand: #4b41d9; }
-        * { font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif; }
-        .card-lite { border: 1px solid #eee; border-radius: 16px; }
-        .pw-meter { height: 6px; border-radius: 6px; background: #eee; overflow: hidden; }
-        .pw-meter > span { display: block; height: 100%; width: 0; background: var(--brand); transition: width .2s; }
-        .req-list li { margin: .15rem 0; }
-        .req-bad { color: #b42318; }
-        .req-ok { color: #16794f; }
+    <style nonce="<?= $CSP_NONCE ?>">
+        :root {
+            --brand: #4b41d9;
+        }
+
+        * {
+            font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+        }
+
+        .card-lite {
+            border: 1px solid #eee;
+            border-radius: 16px;
+        }
+
+        .pw-meter {
+            height: 6px;
+            border-radius: 6px;
+            background: #eee;
+            overflow: hidden;
+        }
+
+        .pw-meter>span {
+            display: block;
+            height: 100%;
+            width: 0;
+            background: var(--brand);
+            transition: width .2s;
+        }
+
+        .req-list li {
+            margin: .15rem 0;
+        }
+
+        .req-bad {
+            color: #b42318;
+        }
+
+        .req-ok {
+            color: #16794f;
+        }
     </style>
 </head>
+
 <body class="bg-light">
 
-<header class="navbar navbar-expand-lg bg-white border-bottom">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="../index.php">
-            <img src="../images/Logo.png" height="28" class="me-2" alt="Logo">InmobiliariaModerna
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Menú">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <nav id="nav" class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="../index.php">Inicio</a></li>
-                <li class="nav-item"><a class="nav-link" href="../inmuebles.php">Propiedades</a></li>
-                <li class="nav-item"><a class="btn btn-outline-primary" href="../login.php">Iniciar Sesión</a></li>
-            </ul>
-        </nav>
-    </div>
-</header>
+    <header class="navbar navbar-expand-lg bg-white border-bottom">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="../index.php">
+                <img src="../images/Logo.png" height="28" class="me-2" alt="Logo">InmobiliariaModerna
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
+                aria-controls="nav" aria-expanded="false" aria-label="Menú">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <nav id="nav" class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="../index.php">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../inmuebles.php">Propiedades</a></li>
+                    <li class="nav-item"><a class="btn btn-outline-primary" href="../login.php">Iniciar Sesión</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-<main class="container my-5" style="max-width:880px">
-    <div class="card card-lite p-4 p-md-5 mx-auto">
-        <h1 class="h3 fw-bold text-center mb-2">Crear Cuenta de Empleado</h1>
-        <p class="text-center text-muted mb-4">Registra un nuevo empleado para gestionar propiedades y citas.</p>
+    <main class="container my-5" style="max-width:880px">
+        <div class="card card-lite p-4 p-md-5 mx-auto">
+            <h1 class="h3 fw-bold text-center mb-2">Crear Cuenta de Empleado</h1>
+            <p class="text-center text-muted mb-4">Registra un nuevo empleado para gestionar propiedades y citas.</p>
 
-        <?php if (!empty($_SESSION['flash_error'])): ?>
-            <div class="alert alert-danger"><strong>Ups:</strong> <?= htmlspecialchars($_SESSION['flash_error']) ?></div>
-            <?php unset($_SESSION['flash_error']); ?>
-        <?php elseif (!empty($_SESSION['flash_success'])): ?>
-            <div class="alert alert-success" id="msg-success"><?= htmlspecialchars($_SESSION['flash_success']) ?></div>
-            <?php unset($_SESSION['flash_success']); ?>
-        <?php endif; ?>
-
-        <form method="post" action="../Logica/procesarRegistroEmpleado.php" novalidate autocomplete="off">
-            <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf']) ?>">
-
-            <div class="row g-3">
-                <!-- 🔧 CAMBIO: Ahora son 3 columnas para incluir Apellido2 -->
-                <div class="col-md-4">
-                    <label class="form-label">Nombre</label>
-                    <input name="nombre" maxlength="100" class="form-control" placeholder="Nombre del empleado" required autocomplete="given-name">
+            <?php if (!empty($_SESSION['flash_error'])): ?>
+                <div class="alert alert-danger"><strong>Ups:</strong> <?= htmlspecialchars($_SESSION['flash_error']) ?>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Primer Apellido</label>
-                    <input name="apellido" maxlength="100" class="form-control" placeholder="Primer apellido" required autocomplete="family-name">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Segundo Apellido</label>
-                    <input name="apellido2" maxlength="100" class="form-control" placeholder="Segundo apellido" required autocomplete="additional-name">
-                </div>
+                <?php unset($_SESSION['flash_error']); ?>
+            <?php elseif (!empty($_SESSION['flash_success'])): ?>
+                <div class="alert alert-success" id="msg-success"><?= htmlspecialchars($_SESSION['flash_success']) ?></div>
+                <?php unset($_SESSION['flash_success']); ?>
+            <?php endif; ?>
 
-                <div class="col-12">
-                    <label class="form-label">Usuario Sugerido</label>
-                    <input name="usuario" id="usuario" maxlength="100" class="form-control" placeholder="usuario.apellido (editable)" autocapitalize="none" autocomplete="username">
-                    <small class="text-muted">Generado automáticamente como: nombre.apellido1.apellido2 (puedes editarlo si deseas).</small>
-                </div>
+            <form method="post" action="../Logica/procesarRegistroEmpleado.php" novalidate autocomplete="off">
+                <?php
+                require_once __DIR__ . '/../Logica/csrf_helpers.php';
+                csrf_generate_token();
+                echo csrf_field();
+                ?>
+                <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['csrf']) ?>">
 
-                <div class="col-12">
-                    <label class="form-label">Correo Electrónico</label>
-                    <input name="correo" id="correo" class="form-control" readonly value="" placeholder="Se generará como usuario@droca.com">
-                    <small class="text-muted">El correo se genera automáticamente a partir del usuario.</small>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Teléfono (8 dígitos)</label>
-                    <input name="telefono" pattern="\d{8}" maxlength="8" class="form-control" placeholder="12345678" required inputmode="numeric" autocomplete="tel">
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Cargo</label>
-                    <select name="idCargo" class="form-control" required>
-                        <option value="">Selecciona un cargo</option>
-                        <?php foreach ($cargos as $cargo): ?>
-                            <option value="<?= $cargo['idCargo'] ?>"><?= htmlspecialchars($cargo['NombreCargo']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                
-                <div class="col-md-6">
-                    <label class="form-label">Rol</label>
-                    <select name="idRol" class="form-control" required>
-                        <option value="">Selecciona un rol</option>
-                        <?php foreach ($roles as $rol): ?>
-                            <option value="<?= $rol['idRol'] ?>"><?= htmlspecialchars($rol['NombreRol']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label">Contraseña</label>
-                    <input name="password" id="password" type="password" class="form-control" placeholder="Crea una contraseña segura" required autocomplete="new-password">
-                    <div class="d-flex align-items-center mt-2 gap-2">
-                        <div class="pw-meter flex-grow-1"><span id="pwBar"></span></div>
-                        <small id="pwLabel" class="text-muted">Débil</small>
+                <div class="row g-3">
+                    <!-- 🔧 CAMBIO: Ahora son 3 columnas para incluir Apellido2 -->
+                    <div class="col-md-4">
+                        <label class="form-label">Nombre</label>
+                        <input name="nombre" maxlength="100" class="form-control" placeholder="Nombre del empleado"
+                            required autocomplete="given-name">
                     </div>
-                    <ul class="req-list small mt-2 text-muted" aria-live="polite">
-                        <li id="req_len" class="req-bad">Al menos 12 caracteres</li>
-                        <li id="req_may" class="req-bad">Una letra mayúscula</li>
-                        <li id="req_min" class="req-bad">Una letra minúscula</li>
-                        <li id="req_num" class="req-bad">Un número</li>
-                        <li id="req_sym" class="req-bad">Un símbolo</li>
-                    </ul>
+                    <div class="col-md-4">
+                        <label class="form-label">Primer Apellido</label>
+                        <input name="apellido" maxlength="100" class="form-control" placeholder="Primer apellido"
+                            required autocomplete="family-name">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Segundo Apellido</label>
+                        <input name="apellido2" maxlength="100" class="form-control" placeholder="Segundo apellido"
+                            required autocomplete="additional-name">
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Usuario Sugerido</label>
+                        <input name="usuario" id="usuario" maxlength="100" class="form-control"
+                            placeholder="usuario.apellido (editable)" autocapitalize="none" autocomplete="username">
+                        <small class="text-muted">Generado automáticamente como: nombre.apellido1.apellido2 (puedes
+                            editarlo si deseas).</small>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Correo Electrónico</label>
+                        <input name="correo" id="correo" class="form-control" readonly value=""
+                            placeholder="Se generará como usuario@droca.com">
+                        <small class="text-muted">El correo se genera automáticamente a partir del usuario.</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Teléfono (8 dígitos)</label>
+                        <input name="telefono" pattern="\d{8}" maxlength="8" class="form-control" placeholder="12345678"
+                            required inputmode="numeric" autocomplete="tel">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Cargo</label>
+                        <select name="idCargo" class="form-control" required>
+                            <option value="">Selecciona un cargo</option>
+                            <?php foreach ($cargos as $cargo): ?>
+                                <option value="<?= $cargo['idCargo'] ?>"><?= htmlspecialchars($cargo['NombreCargo']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Rol</label>
+                        <select name="idRol" class="form-control" required>
+                            <option value="">Selecciona un rol</option>
+                            <?php foreach ($roles as $rol): ?>
+                                <option value="<?= $rol['idRol'] ?>"><?= htmlspecialchars($rol['NombreRol']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Contraseña</label>
+                        <input name="password" id="password" type="password" class="form-control"
+                            placeholder="Crea una contraseña segura" required autocomplete="new-password">
+                        <div class="d-flex align-items-center mt-2 gap-2">
+                            <div class="pw-meter flex-grow-1"><span id="pwBar"></span></div>
+                            <small id="pwLabel" class="text-muted">Débil</small>
+                        </div>
+                        <ul class="req-list small mt-2 text-muted" aria-live="polite">
+                            <li id="req_len" class="req-bad">Al menos 12 caracteres</li>
+                            <li id="req_may" class="req-bad">Una letra mayúscula</li>
+                            <li id="req_min" class="req-bad">Una letra minúscula</li>
+                            <li id="req_num" class="req-bad">Un número</li>
+                            <li id="req_sym" class="req-bad">Un símbolo</li>
+                        </ul>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Confirmar Contraseña</label>
+                        <input name="password2" id="password2" type="password" class="form-control"
+                            placeholder="Confirma tu contraseña" required autocomplete="new-password">
+                    </div>
+
+                    <div class="col-12">
+                        <button class="btn btn-primary w-100 py-2">Registrar Empleado</button>
+                    </div>
                 </div>
+            </form>
 
-                <div class="col-12">
-                    <label class="form-label">Confirmar Contraseña</label>
-                    <input name="password2" id="password2" type="password" class="form-control" placeholder="Confirma tu contraseña" required autocomplete="new-password">
-                </div>
+            <p class="text-center mt-3 mb-0">
+                <a href="gestionarEmpleados.php" class="btn btn-outline-secondary">Volver a Gestión de Empleados</a>
+            </p>
+        </div>
+    </main>
 
-                <div class="col-12">
-                    <button class="btn btn-primary w-100 py-2">Registrar Empleado</button>
-                </div>
-            </div>
-        </form>
+    <footer class="border-top py-4">
+        <div class="container d-flex justify-content-between">
+            <span class="text-muted">© <?= date('Y') ?> InmobiliariaModerna</span>
+            <span class="text-muted">Recursos · Compañía</span>
+        </div>
+    </footer>
 
-        <p class="text-center mt-3 mb-0">
-            <a href="gestionarEmpleados.php" class="btn btn-outline-secondary">Volver a Gestión de Empleados</a>
-        </p>
-    </div>
-</main>
+    <script nonce="<?= $CSP_NONCE ?>">
+        // 🔧 --- Generación automática y dinámica del usuario y correo (CON APELLIDO2) ---
+        const nombre = document.querySelector('input[name="nombre"]');
+        const apellido = document.querySelector('input[name="apellido"]');
+        const apellido2 = document.querySelector('input[name="apellido2"]'); // 🆕 NUEVO
+        const usuario = document.getElementById('usuario');
+        const correo = document.getElementById('correo');
+        let usuarioModificado = false;
 
-<footer class="border-top py-4">
-    <div class="container d-flex justify-content-between">
-        <span class="text-muted">© <?= date('Y') ?> InmobiliariaModerna</span>
-        <span class="text-muted">Recursos · Compañía</span>
-    </div>
-</footer>
+        function toASCII(s) {
+            return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/gi, 'n');
+        }
 
-<script nonce="<?= $CSP_NONCE ?>">
-// 🔧 --- Generación automática y dinámica del usuario y correo (CON APELLIDO2) ---
-const nombre = document.querySelector('input[name="nombre"]');
-const apellido = document.querySelector('input[name="apellido"]');
-const apellido2 = document.querySelector('input[name="apellido2"]'); // 🆕 NUEVO
-const usuario = document.getElementById('usuario');
-const correo = document.getElementById('correo');
-let usuarioModificado = false;
+        function norm(s) {
+            return toASCII(s).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').trim().replace(/\s+/g, ' ');
+        }
 
-function toASCII(s) { 
-    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/gi, 'n'); 
-}
+        function sugerirUsuario() {
+            if (usuarioModificado) return; // No sobrescribir si el usuario edita manualmente
 
-function norm(s) { 
-    return toASCII(s).toLowerCase().replace(/[^a-z0-9 ]/g, ' ').trim().replace(/\s+/g, ' '); 
-}
+            const n = (norm(nombre.value).split(' ')[0] || '').replace(/[^a-z]/g, '');
+            const a1 = (norm(apellido.value).split(' ')[0] || '').replace(/[^a-z]/g, '');
+            const a2 = (norm(apellido2.value).split(' ')[0] || '').replace(/[^a-z]/g, ''); // 🆕 NUEVO
 
-function sugerirUsuario() {
-    if (usuarioModificado) return; // No sobrescribir si el usuario edita manualmente
-    
-    const n = (norm(nombre.value).split(' ')[0] || '').replace(/[^a-z]/g, '');
-    const a1 = (norm(apellido.value).split(' ')[0] || '').replace(/[^a-z]/g, '');
-    const a2 = (norm(apellido2.value).split(' ')[0] || '').replace(/[^a-z]/g, ''); // 🆕 NUEVO
-    
-    // 🔧 Generar usuario como: nombre.apellido1.apellido2
-    let user = '';
-    if (n && a1 && a2) {
-        user = `${n}.${a1}.${a2}`;
-    } else if (n && a1) {
-        user = `${n}.${a1}`;
-    } else if (n) {
-        user = n;
-    } else if (a1) {
-        user = a1;
-    }
-    
-    usuario.value = user;
-    correo.value = user ? `${user}@droca.com` : '';
-}
+            // 🔧 Generar usuario como: nombre.apellido1.apellido2
+            let user = '';
+            if (n && a1 && a2) {
+                user = `${n}.${a1}.${a2}`;
+            } else if (n && a1) {
+                user = `${n}.${a1}`;
+            } else if (n) {
+                user = n;
+            } else if (a1) {
+                user = a1;
+            }
 
-// 🔧 Event listeners para los 3 campos
-nombre.addEventListener('input', sugerirUsuario);
-apellido.addEventListener('input', sugerirUsuario);
-apellido2.addEventListener('input', sugerirUsuario); // 🆕 NUEVO
+            usuario.value = user;
+            correo.value = user ? `${user}@droca.com` : '';
+        }
 
-usuario.addEventListener('input', () => {
-    usuarioModificado = true;
-    correo.value = usuario.value ? `${usuario.value}@droca.com` : '';
-});
+        // 🔧 Event listeners para los 3 campos
+        nombre.addEventListener('input', sugerirUsuario);
+        apellido.addEventListener('input', sugerirUsuario);
+        apellido2.addEventListener('input', sugerirUsuario); // 🆕 NUEVO
 
-// --- Medidor de contraseña ---
-const pwd = document.getElementById('password');
-const pwBar = document.getElementById('pwBar');
-const pwLabel = document.getElementById('pwLabel');
-const reqs = { 
-    len: document.getElementById('req_len'), 
-    may: document.getElementById('req_may'), 
-    min: document.getElementById('req_min'), 
-    num: document.getElementById('req_num'), 
-    sym: document.getElementById('req_sym') 
-};
+        usuario.addEventListener('input', () => {
+            usuarioModificado = true;
+            correo.value = usuario.value ? `${usuario.value}@droca.com` : '';
+        });
 
-function evalPwd(v) {
-    const r = {
-        len: v.length >= 12,
-        may: /[A-Z]/.test(v),
-        min: /[a-z]/.test(v),
-        num: /\d/.test(v),
-        sym: /[^A-Za-z0-9]/.test(v)
-    };
-    
-    let s = Object.values(r).filter(Boolean).length;
-    pwBar.style.width = (s * 20) + '%';
-    pwLabel.textContent = ['Muy débil', 'Débil', 'Media', 'Buena', 'Fuerte', 'Excelente'][s];
-    
-    for (const k in r) { 
-        reqs[k].className = r[k] ? 'req-ok' : 'req-bad'; 
-    }
-}
+        // --- Medidor de contraseña ---
+        const pwd = document.getElementById('password');
+        const pwBar = document.getElementById('pwBar');
+        const pwLabel = document.getElementById('pwLabel');
+        const reqs = {
+            len: document.getElementById('req_len'),
+            may: document.getElementById('req_may'),
+            min: document.getElementById('req_min'),
+            num: document.getElementById('req_num'),
+            sym: document.getElementById('req_sym')
+        };
 
-pwd.addEventListener('input', e => evalPwd(e.target.value));
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" nonce="<?= $CSP_NONCE ?>"></script>
+        function evalPwd(v) {
+            const r = {
+                len: v.length >= 12,
+                may: /[A-Z]/.test(v),
+                min: /[a-z]/.test(v),
+                num: /\d/.test(v),
+                sym: /[^A-Za-z0-9]/.test(v)
+            };
+
+            let s = Object.values(r).filter(Boolean).length;
+            pwBar.style.width = (s * 20) + '%';
+            pwLabel.textContent = ['Muy débil', 'Débil', 'Media', 'Buena', 'Fuerte', 'Excelente'][s];
+
+            for (const k in r) {
+                reqs[k].className = r[k] ? 'req-ok' : 'req-bad';
+            }
+        }
+
+        pwd.addEventListener('input', e => evalPwd(e.target.value));
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        nonce="<?= $CSP_NONCE ?>"></script>
 </body>
+
 </html>

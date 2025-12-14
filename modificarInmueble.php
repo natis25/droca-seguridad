@@ -1,5 +1,8 @@
 <?php
 require_once 'Logica/sql.php';
+require_once __DIR__ . '/Logica/csrf_helpers.php';
+
+csrf_generate_token();
 
 if (isset($_GET['id'])) {
     $idInmueble = $_GET['id'];
@@ -82,6 +85,7 @@ if (isset($_GET['id'])) {
             </div>
             <div class="form-panel">
                 <form method="POST" action="Logica/actualizarInmueble.php" onsubmit="return validarMonto();">
+                    <?php echo csrf_field(); ?>
                     <input type="hidden" name="idInmueble" value="<?php echo $idInmueble; ?>">
 
                     <div class="form-group">

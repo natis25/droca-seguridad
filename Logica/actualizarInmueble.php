@@ -1,16 +1,20 @@
 <?php
 require_once 'sql.php';
 require_once 'ApplicationLogger.php';
+require_once __DIR__ . '/csrf_helpers.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validar token CSRF
+    csrf_validate_or_die('../gestionarInmuebles.php', 'Token de seguridad inválido.');
+
     $conn = Conectarse();
-    
+
     if (!$conn) {
         die("Error de conexión a la base de datos");
     }
-    
+
     $appLogger = new ApplicationLogger($conn);
-    
+
     $idInmueble = $_POST['idInmueble'] ?? 0;
     $direccion = $_POST['direccion'] ?? '';
     $monto = $_POST['monto'] ?? 0;
@@ -21,12 +25,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         // Obtener valores anteriores para el log
         $inmuebleAnterior = obtenerInmueblePorId($idInmueble);
-        
+
         actualizarVivienda($idInmueble, $direccion, $monto, $zona, $tipo, $operacion);
-        
+
         // 🆕 LOG: Propiedad modificada
         $cambios = [];
-        
+
         if ($inmuebleAnterior['Direccion'] != $direccion) {
             $cambios['direccion'] = ['anterior' => $inmuebleAnterior['Direccion'], 'nuevo' => $direccion];
         }
@@ -42,22 +46,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($inmuebleAnterior['TipoOferta_idTipoO'] != $operacion) {
             $cambios['tipo_oferta'] = ['anterior' => $inmuebleAnterior['TipoOferta_idTipoO'], 'nuevo' => $operacion];
         }
-        
+
         if (!empty($cambios)) {
             $appLogger->logModificarPropiedad($idInmueble, $cambios);
         }
-        
+
     } catch (Exception $e) {
         // LOG: Error al modificar propiedad
         $appLogger->logError('propiedades', $e->getMessage());
     }
-    
+
     $conn->close();
     header("Location: ../gestionarInmuebles.php");
     exit();
 }
 
-function actualizarVivienda($idInmueble, $direccion, $monto, $zona, $tipoVivienda, $tipoOferta) {
+function actualizarVivienda($idInmueble, $direccion, $monto, $zona, $tipoVivienda, $tipoOferta)
+{
     $conexion = Conectarse();
     if (!$conexion) {
         throw new Exception("Error de conexión a la base de datos");

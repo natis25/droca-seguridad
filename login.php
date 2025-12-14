@@ -10,6 +10,17 @@ if (file_exists(__DIR__ . '/.env')) {
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->safeLoad();
 
+// Incluir helpers de CSRF
+require_once __DIR__ . '/Logica/csrf_helpers.php';
+csrf_generate_token();
+
+// Generar nonce para CSP
+try {
+    $CSP_NONCE = base64_encode(random_bytes(16));
+} catch (Exception $e) {
+    $CSP_NONCE = base64_encode(openssl_random_pseudo_bytes(16));
+}
+
 /* ================== HEADERS DE SEGURIDAD (OWASP ZAP) ================== */
 header("X-Frame-Options: DENY"); // Anti-Clickjacking
 header("X-Content-Type-Options: nosniff");
@@ -22,8 +33,8 @@ header(
     "frame-ancestors 'none'; " .
     // reCAPTCHA + (por si luego añaden CDNs)
     "script-src 'self' https://www.google.com https://www.gstatic.com; " .
-    // Tienes <style> inline
-    "style-src 'self' 'unsafe-inline'; " .
+    // Usar nonce para estilos inline
+    "style-src 'self' 'nonce-{$CSP_NONCE}'; " .
     // reCAPTCHA carga recursos desde google/gstatic
     "img-src 'self' data: https://www.google.com https://www.gstatic.com; " .
     "frame-src https://www.google.com; " .
@@ -37,12 +48,13 @@ session_start();
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión</title>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <style>
+    <style nonce="<?= $CSP_NONCE ?>">
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -129,6 +141,7 @@ session_start();
         ?>
 
         <form action="Logica/procesarLogin.php" method="POST">
+            <?php echo csrf_field(); ?>
             <input type="text" name="usuario" placeholder="Usuario" required>
             <input type="password" name="password" placeholder="Contraseña" required><br>
             <div class="g-recaptcha" data-sitekey="<?= $_ENV['RECAPTCHA_SITE_KEY'] ?>"></div><br>
@@ -143,4 +156,5 @@ session_start();
         </div>
     </div>
 </body>
+
 </html>
