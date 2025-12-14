@@ -1,12 +1,35 @@
 <?php
+
+require_once __DIR__ . '/vendor/autoload.php'; 
+use Dotenv\Dotenv;
+
+// Intentar cargar .env solo si existe (para local)
+if (file_exists(__DIR__ . '/.env')) {
+    $dotenv = Dotenv::createImmutable(__DIR__);
+    $dotenv->safeLoad();
+}
+
 function Conectarse()
 {
-    if (!($link = mysqli_connect("localhost", "root"))) {
+    // 1. Definir credenciales: Prioridad Railway > Prioridad .env > Defecto XAMPP
+    $host = $_ENV['MYSQLHOST'] ?? $_ENV['DB_HOST'] ?? 'localhost';
+    $user = $_ENV['MYSQLUSER'] ?? $_ENV['DB_USER'] ?? 'root';
+    $pass = $_ENV['MYSQLPASSWORD'] ?? $_ENV['DB_PASS'] ?? ''; // Vacío en XAMPP
+    $db   = $_ENV['MYSQLDATABASE'] ?? $_ENV['DB_NAME'] ?? 'droca';
+    $port = $_ENV['MYSQLPORT'] ?? $_ENV['DB_PORT'] ?? 3306;
+
+    // 2. Conexión usando el puerto correcto (Vital para Railway)
+    $link = mysqli_connect($host, $user, $pass, $db, $port);
+
+    if (!$link) {
+        // En producción evita mostrar errores detallados, pero para debug sirve:
+        error_log("Error de conexión: " . mysqli_connect_error());
         return 0;
     }
-    if (!mysqli_select_db($link, "droca")) {
-        return 0;
-    }
+
+    // Asegurar UTF-8 para que no salgan símbolos raros
+    mysqli_set_charset($link, "utf8");
+
     return $link;
 }
 

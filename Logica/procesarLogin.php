@@ -1,7 +1,17 @@
 <?php
+
+require_once __DIR__ . '/../vendor/autoload.php'; // Nota el "/../" para salir de la carpeta Logica
+use Dotenv\Dotenv;
+
+// Carga segura de .env (si existe en local)
+if (file_exists(__DIR__ . '/../.env')) {
+    $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+    $dotenv->safeLoad();
+}
+
 include('sql.php');
 include('CAPTCHA.php');
-require_once 'SecurityLogger.php';
+require_once '../SecurityLogger.php';
 
 session_start();
 
