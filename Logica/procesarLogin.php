@@ -130,7 +130,7 @@ if (empty($captcha_result["success"]) || !$captcha_result["success"]) {
             }
 
             $conn->close();
-            header("Location: ../OSI/panelControl.php");
+            header("Location: ../OSI/panelControlOSI.php");
             exit();
             
         } else {
