@@ -406,7 +406,7 @@ $conn->close();
                        class="btn btn-danger">
                         <i class="fas fa-file-pdf"></i> Exportar PDF
                     </a>
-                    <a href="panelControl.php" class="btn btn-secondary">
+                    <a href="panelControlOSI.php" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Volver al Panel
                     </a>
                 </div>
