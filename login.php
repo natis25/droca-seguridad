@@ -2,19 +2,41 @@
 require "vendor/autoload.php";
 use Dotenv\Dotenv;
 
-
+// Cargar .env (tu código actual, pero ordenado)
 if (file_exists(__DIR__ . '/.env')) {
     $dotenv = Dotenv::createImmutable(__DIR__);
     $dotenv->load();
 }
-
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->safeLoad();
+
+/* ================== HEADERS DE SEGURIDAD (OWASP ZAP) ================== */
+header("X-Frame-Options: DENY"); // Anti-Clickjacking
+header("X-Content-Type-Options: nosniff");
+
+header(
+    "Content-Security-Policy: " .
+    "default-src 'self'; " .
+    "base-uri 'self'; " .
+    "object-src 'none'; " .
+    "frame-ancestors 'none'; " .
+    // reCAPTCHA + (por si luego añaden CDNs)
+    "script-src 'self' https://www.google.com https://www.gstatic.com; " .
+    // Tienes <style> inline
+    "style-src 'self' 'unsafe-inline'; " .
+    // reCAPTCHA carga recursos desde google/gstatic
+    "img-src 'self' data: https://www.google.com https://www.gstatic.com; " .
+    "frame-src https://www.google.com; " .
+    "connect-src 'self' https://www.google.com https://www.gstatic.com; " .
+    "upgrade-insecure-requests"
+);
+/* ===================================================================== */
+
+session_start();
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -84,39 +106,6 @@ $dotenv->safeLoad();
             color: #007bff;
         }
 
-        /* body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #3a0ca3, #7209b7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
-        }
-        .login-box {
-            background: rgba(255,255,255,0.1);
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-            width: 320px;
-            text-align: center;
-        }
-        input {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 8px;
-        }
-        button {
-            background-color: #4361ee;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-        }*/
-
         a {
             color: #ffd500ff;
             text-decoration: none;
@@ -131,19 +120,21 @@ $dotenv->safeLoad();
 <body>
     <div class="login-box">
         <h2>🔒 Iniciar Sesión</h2>
+
         <?php
-        session_start();
         if (isset($_SESSION['error'])) {
             echo '<p class="error">' . $_SESSION['error'] . '</p>';
             unset($_SESSION['error']);
         }
         ?>
+
         <form action="Logica/procesarLogin.php" method="POST">
             <input type="text" name="usuario" placeholder="Usuario" required>
             <input type="password" name="password" placeholder="Contraseña" required><br>
             <div class="g-recaptcha" data-sitekey="<?= $_ENV['RECAPTCHA_SITE_KEY'] ?>"></div><br>
             <button type="submit">Iniciar Sesión</button>
         </form>
+
         <br><br>
         <a href="recover.php">¿Olvidaste tu contraseña?</a>
         <br><br>
@@ -152,5 +143,4 @@ $dotenv->safeLoad();
         </div>
     </div>
 </body>
-
 </html>

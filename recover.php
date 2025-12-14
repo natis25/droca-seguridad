@@ -1,15 +1,30 @@
-<!-- Este archivo genera el token, lo guarda en la tabla cliente, -->
-<!-- y envía un correo con el enlace de restablecimiento. -->
-
 <?php
 require 'vendor/autoload.php';
 include 'logica/sql.php';
 
-$conn = Conectarse();
-
 use Dotenv\Dotenv;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+
+/* ================== HEADERS DE SEGURIDAD (OWASP ZAP) ================== */
+header("X-Frame-Options: DENY"); // Anti-Clickjacking
+header("X-Content-Type-Options: nosniff");
+
+header(
+    "Content-Security-Policy: " .
+    "default-src 'self'; " .                 // Fallback
+    "base-uri 'self'; " .
+    "object-src 'none'; " .
+    "frame-ancestors 'none'; " .
+    "script-src 'self'; " .                  // No usas JS externo aquí
+    "style-src 'self' 'unsafe-inline'; " .   // Tienes <style> inline
+    "img-src 'self' data:; " .
+    "connect-src 'self'; " .
+    "upgrade-insecure-requests"
+);
+/* ===================================================================== */
+
+$conn = Conectarse();
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
@@ -28,27 +43,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $token = bin2hex(random_bytes(50));
         $expira = date("Y-m-d H:i:s", strtotime("+1 hour"));
 
-        $update = $conn->prepare("UPDATE cliente SET rcvPass_token=?, rcvPass_token_expires=? WHERE Correo=?");
+        $update = $conn->prepare(
+            "UPDATE cliente SET rcvPass_token=?, rcvPass_token_expires=? WHERE Correo=?"
+        );
         $update->bind_param("sss", $token, $expira, $email);
         $update->execute();
 
         // Enlace para restablecer
         $link = "http://localhost/logica/resetPassword.php?token=$token";
-        // * IF THE PROJECT IS RUNNING ON PHP SERVER: localhost:3000
-        // $link = "http://localhost:3000/logica/resetPassword.php?token=$token";
 
-        // Configurar y enviar correo
+        // Enviar correo
         $mail = new PHPMailer(true);
         try {
             $mail->isSMTP();
-            // ! DESACTIVAR ANTIVIRUS EN DESARROLLO, Ó PONER "*verify" EN FALSE (NO SEGURO):
-            $mail->SMTPOptions = array(
-                'ssl' => array(
+            $mail->SMTPOptions = [
+                'ssl' => [
                     'verify_peer' => true,
                     'verify_peer_name' => true,
                     'allow_self_signed' => true
-                )
-            );
+                ]
+            ];
             $mail->SMTPDebug = 0;
             $mail->CharSet = 'UTF-8';
             $mail->Encoding = 'base64';
@@ -72,7 +86,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $mail->send();
             echo "<script>alert('✅ Se envió un enlace de recuperación a tu correo.'); window.location='login.php';</script>";
         } catch (Exception $e) {
-            echo "<script>alert('❌ Error al enviar correo: {$mail->ErrorInfo}');</script>";
+            echo "<script>alert('❌ Error al enviar correo.');</script>";
         }
     } else {
         echo "<script>alert('⚠️ El correo no está registrado.');</script>";
@@ -82,7 +96,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <title>Recuperar Contraseña</title>
@@ -139,12 +152,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </head>
 
 <body>
-    <form action="recover.php" method="POST">
-        <h2>🔑 Recuperar Contraseña</h2>
-        <input type="email" name="correo" placeholder="Tu correo registrado" required>
-        <button type="submit">Enviar enlace</button><br><br>
-        <a href="login.php">Volver a Inicio de Sesión</a>
-    </form>
+<form action="recover.php" method="POST">
+    <h2>🔑 Recuperar Contraseña</h2>
+    <input type="email" name="correo" placeholder="Tu correo registrado" required>
+    <button type="submit">Enviar enlace</button><br><br>
+    <a href="login.php">Volver a Inicio de Sesión</a>
+</form>
 </body>
-
 </html>

@@ -1,66 +1,43 @@
+<?php include('header.php'); ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>D'Roca Inmobiliaria</title>
+
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Overlock:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
 
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Overlock:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap" rel="stylesheet">
 
-        nav a {
-            color: white;
-            margin-right: 20px;
-            text-decoration: none;
-        }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
 
-        .banner {
-            background: url('images/banner.jpg') no-repeat center center;
-            background-size: cover;
-            height: 300px;
-            text-align: center;
-            color: white;
-        }
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
-        .banner h2 {
-            padding-top: 100px;
-            font-size: 48px;
-        }
-
-        .carousel-inner img {
-            width: 100%;
-            height: 500px;
-            object-fit: cover;
-        }
-        
-        .testimonials {
-            background-color: #f9f9f9;
-            padding: 30px;
-        }
-
-        .testimonials h3 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .testimonials p {
-            font-style: italic;
-            text-align: center;
-        }
-    </style>
+  <style>
+      body { font-family: Arial, sans-serif; }
+      nav a { color: white; margin-right: 20px; text-decoration: none; }
+      .banner {
+          background: url('images/banner.jpg') no-repeat center center;
+          background-size: cover;
+          height: 300px;
+          text-align: center;
+          color: white;
+      }
+      .banner h2 { padding-top: 100px; font-size: 48px; }
+      .carousel-inner img { width: 100%; height: 500px; object-fit: cover; }
+      .testimonials { background-color: #f9f9f9; padding: 30px; }
+      .testimonials h3 { text-align: center; margin-bottom: 20px; }
+      .testimonials p { font-style: italic; text-align: center; }
+  </style>
 </head>
+
 <body>
-<?php include('header.php'); ?>
 <section class="properties-carousel container mt-5">
     <h3 class="text-center">Propiedades Destacadas</h3>
     <div id="propertyCarousel" class="carousel slide" data-ride="carousel">
@@ -149,6 +126,7 @@
         </a>
     </div>
 </section>
+
 <section class="container mt-5">
     <h3 class="text-center">Sobre Nosotros</h3>
     <p class="text-center">

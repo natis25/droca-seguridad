@@ -1,3 +1,5 @@
+<?php include('header.php'); ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -86,7 +88,6 @@
 </head>
 <body>
 
-  <?php include('header.php'); ?>
   <hr>
 
   <div class="grid-container">
