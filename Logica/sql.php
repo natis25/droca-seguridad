@@ -30,7 +30,7 @@ function Conectarse()
     $host = $buscarVariable(['MYSQLHOST', 'DB_HOST'], 'localhost');
     $user = $buscarVariable(['MYSQLUSER', 'DB_USERNAME'], 'root');
     $pass = $buscarVariable(['MYSQLPASSWORD', 'DB_PASSWORD'], '');
-    $db   = $buscarVariable(['MYSQLDATABASE', 'DB_NAME'], 'droca');
+    $db   = $buscarVariable(['MYSQL_DATABASE', 'DB_NAME'], 'droca');
     $port = $buscarVariable(['MYSQLPORT', 'DB_PORT'], 3306);
 
     // Conexión
