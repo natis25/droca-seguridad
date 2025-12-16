@@ -1,33 +1,56 @@
 <?php
 
-require_once __DIR__ . '/vendor/autoload.php'; 
-use Dotenv\Dotenv;
+//require_once __DIR__ . '/vendor/autoload.php'; 
+//use Dotenv\Dotenv;
 
-// Intentar cargar .env solo si existe (para local)
+/*
 if (file_exists(__DIR__ . '/.env')) {
     $dotenv = Dotenv::createImmutable(__DIR__);
     $dotenv->safeLoad();
 }
+*/
 
 function Conectarse()
 {
-    // 1. Definir credenciales: Prioridad Railway > Prioridad .env > Defecto XAMPP
-    $host = $_ENV['MYSQLHOST'] ?? $_ENV['DB_HOST'] ?? 'localhost';
-    $user = $_ENV['MYSQLUSER'] ?? $_ENV['DB_USER'] ?? 'root';
-    $pass = $_ENV['MYSQLPASSWORD'] ?? $_ENV['DB_PASS'] ?? ''; // Vacío en XAMPP
-    $db   = $_ENV['MYSQLDATABASE'] ?? $_ENV['DB_NAME'] ?? 'droca';
-    $port = $_ENV['MYSQLPORT'] ?? $_ENV['DB_PORT'] ?? 3306;
+    // 1. Buscamos las variables en orden: $_ENV (si cargó) -> $_SERVER (servidor) -> getenv (sistema) -> Defecto
+    
+    // Host
+    $host = $_ENV['MYSQLHOST'] ?? $_SERVER['MYSQLHOST'] ?? getenv('MYSQLHOST') 
+            ?? $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? getenv('DB_HOST') 
+            ?? 'localhost';
+            
+    // Usuario
+    $user = $_ENV['MYSQLUSER'] ?? $_SERVER['MYSQLUSER'] ?? getenv('MYSQLUSER') 
+            ?? $_ENV['DB_USERNAME'] ?? $_SERVER['DB_USERNAME'] ?? getenv('DB_USERNAME') 
+            ?? 'root';
+            
+    // Password
+    $pass = $_ENV['MYSQLPASSWORD'] ?? $_SERVER['MYSQLPASSWORD'] ?? getenv('MYSQLPASSWORD') 
+            ?? $_ENV['DB_PASSWORD'] ?? $_SERVER['DB_PASSWORD'] ?? getenv('DB_PASSWORD') 
+            ?? ''; 
+            
+    // Base de datos
+    $db   = $_ENV['MYSQLDATABASE'] ?? $_SERVER['MYSQLDATABASE'] ?? getenv('MYSQLDATABASE') 
+            ?? $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME') 
+            ?? 'droca';
+            
+    // Puerto
+    $port = $_ENV['MYSQLPORT'] ?? $_SERVER['MYSQLPORT'] ?? getenv('MYSQLPORT') 
+            ?? $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? getenv('DB_PORT') 
+            ?? 3306;
 
-    // 2. Conexión usando el puerto correcto (Vital para Railway)
+    // 2. Conexión
     $link = mysqli_connect($host, $user, $pass, $db, $port);
 
     if (!$link) {
-        // En producción evita mostrar errores detallados, pero para debug sirve:
-        error_log("Error de conexión: " . mysqli_connect_error());
-        return 0;
+        // Loguear el error en Railway (no mostrar al usuario)
+        error_log("Error de conexión MySQL: " . mysqli_connect_error());
+        // Puedes descomentar la siguiente línea si quieres ver el error en pantalla mientras pruebas:
+        // echo "Error debug: " . mysqli_connect_error(); 
+        return null;
     }
 
-    // Asegurar UTF-8 para que no salgan símbolos raros
+    // Asegurar UTF-8
     mysqli_set_charset($link, "utf8");
 
     return $link;
