@@ -1,6 +1,6 @@
 <?php
 require 'vendor/autoload.php';
-require_once __DIR__ . 'Logica/sql.php';
+require_once __DIR__ . '/Logica/sql.php';
 require_once __DIR__ . '/Logica/csrf_helpers.php';
 
 use Dotenv\Dotenv;
@@ -99,7 +99,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $mail->Password = getEnvVar('MAIL_PASSWORD');
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port = getEnvVar('MAIL_PORT');
-                
+
                 $mail->setFrom($_ENV['MAIL_FROM'], $_ENV['MAIL_FROM_NAME']);
                 $mail->addAddress($email);
                 $mail->isHTML(true);
