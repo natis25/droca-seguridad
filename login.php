@@ -2,20 +2,49 @@
 require "vendor/autoload.php";
 use Dotenv\Dotenv;
 
-
+// Cargar .env (tu código actual, pero ordenado)
 if (file_exists(__DIR__ . '/.env')) {
     $dotenv = Dotenv::createImmutable(__DIR__);
     $dotenv->safeLoad();
 }
 
-function getEnvVar($key)
-{
-    // Busca en $_ENV (phpdotenv), $_SERVER (servidor) o getenv() (sistema)
-    return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->safeLoad();
+
+// Incluir helpers de CSRF
+require_once __DIR__ . '/Logica/csrf_helpers.php';
+csrf_generate_token();
+
+// Generar nonce para CSP
+try {
+    $CSP_NONCE = base64_encode(random_bytes(16));
+} catch (Exception $e) {
+    $CSP_NONCE = base64_encode(openssl_random_pseudo_bytes(16));
 }
 
-//Obtener la clave del sitio desde las variables de entorno
-$siteKey = getEnvVar('RECAPTCHA_SITE_KEY');
+/* ================== HEADERS DE SEGURIDAD (OWASP ZAP) ================== */
+header("X-Frame-Options: DENY"); // Anti-Clickjacking
+header("X-Content-Type-Options: nosniff");
+
+header(
+    "Content-Security-Policy: " .
+    "default-src 'self'; " .
+    "base-uri 'self'; " .
+    "object-src 'none'; " .
+    "frame-ancestors 'none'; " .
+    // reCAPTCHA + (por si luego añaden CDNs)
+    "script-src 'self' https://www.google.com https://www.gstatic.com; " .
+    // Usar nonce para estilos inline
+    "style-src 'self' 'nonce-{$CSP_NONCE}'; " .
+    // reCAPTCHA carga recursos desde google/gstatic
+    "img-src 'self' data: https://www.google.com https://www.gstatic.com; " .
+    "frame-src https://www.google.com; " .
+    "connect-src 'self' https://www.google.com https://www.gstatic.com; " .
+    "upgrade-insecure-requests"
+);
+/* ===================================================================== */
+
+session_start();
 ?>
 
 <!DOCTYPE html>
@@ -26,7 +55,7 @@ $siteKey = getEnvVar('RECAPTCHA_SITE_KEY');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión</title>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <style>
+    <style nonce="<?= $CSP_NONCE ?>">
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -104,14 +133,16 @@ $siteKey = getEnvVar('RECAPTCHA_SITE_KEY');
 <body>
     <div class="login-box">
         <h2>🔒 Iniciar Sesión</h2>
+
         <?php
-        session_start();
         if (isset($_SESSION['error'])) {
             echo '<p class="error">' . $_SESSION['error'] . '</p>';
             unset($_SESSION['error']);
         }
         ?>
+
         <form action="Logica/procesarLogin.php" method="POST">
+            <?php echo csrf_field(); ?>
             <input type="text" name="usuario" placeholder="Usuario" required>
             <input type="password" name="password" placeholder="Contraseña" required><br>
             <?php if (!empty($siteKey)): ?>
@@ -121,6 +152,7 @@ $siteKey = getEnvVar('RECAPTCHA_SITE_KEY');
             <?php endif; ?>
             <button type="submit">Iniciar Sesión</button>
         </form>
+
         <br><br>
         <a href="recover.php">¿Olvidaste tu contraseña?</a>
         <br><br>

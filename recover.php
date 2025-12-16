@@ -1,81 +1,111 @@
-<!-- Este archivo genera el token, lo guarda en la tabla cliente, -->
-<!-- y envía un correo con el enlace de restablecimiento. -->
-
 <?php
 require 'vendor/autoload.php';
 include 'logica/sql.php';
-
-$conn = Conectarse();
+require_once __DIR__ . '/Logica/csrf_helpers.php';
 
 use Dotenv\Dotenv;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// Generar token CSRF
+csrf_generate_token();
+
+// Generar nonce para CSP
+try {
+    $CSP_NONCE = base64_encode(random_bytes(16));
+} catch (Exception $e) {
+    $CSP_NONCE = base64_encode(openssl_random_pseudo_bytes(16));
+}
+
+/* ================== HEADERS DE SEGURIDAD (OWASP ZAP) ================== */
+header("X-Frame-Options: DENY"); // Anti-Clickjacking
+header("X-Content-Type-Options: nosniff");
+
+header(
+    "Content-Security-Policy: " .
+    "default-src 'self'; " .                 // Fallback
+    "base-uri 'self'; " .
+    "object-src 'none'; " .
+    "frame-ancestors 'none'; " .
+    "script-src 'self'; " .                  // No usas JS externo aquí
+    "style-src 'self' 'nonce-{$CSP_NONCE}'; " .   // Usar nonce para estilos inline
+    "img-src 'self' data:; " .
+    "connect-src 'self'; " .
+    "upgrade-insecure-requests"
+);
+/* ===================================================================== */
+
+$conn = Conectarse();
+
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $email = trim($_POST['correo']);
+    // Validar token CSRF
+    if (!csrf_validate()) {
+        echo "<script>alert('❌ Token de seguridad inválido. Por favor, intenta nuevamente.');</script>";
+    } else {
+        $email = trim($_POST['correo']);
 
-    // Buscar si el correo existe
-    $stmt = $conn->prepare("SELECT idCliente FROM cliente WHERE Correo=?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
+        // Buscar si el correo existe
+        $stmt = $conn->prepare("SELECT idCliente FROM cliente WHERE Correo=?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-    if ($result->num_rows > 0) {
-        // Generar token
-        $token = bin2hex(random_bytes(50));
-        $expira = date("Y-m-d H:i:s", strtotime("+1 hour"));
+        if ($result->num_rows > 0) {
+            // Generar token
+            $token = bin2hex(random_bytes(50));
+            $expira = date("Y-m-d H:i:s", strtotime("+1 hour"));
 
-        $update = $conn->prepare("UPDATE cliente SET rcvPass_token=?, rcvPass_token_expires=? WHERE Correo=?");
-        $update->bind_param("sss", $token, $expira, $email);
-        $update->execute();
-
-        // Enlace para restablecer
-        $link = "http://localhost/logica/resetPassword.php?token=$token";
-        // * IF THE PROJECT IS RUNNING ON PHP SERVER: localhost:3000
-        // $link = "http://localhost:3000/logica/resetPassword.php?token=$token";
-
-        // Configurar y enviar correo
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();
-            // ! DESACTIVAR ANTIVIRUS EN DESARROLLO, Ó PONER "*verify" EN FALSE (NO SEGURO):
-            $mail->SMTPOptions = array(
-                'ssl' => array(
-                    'verify_peer' => true,
-                    'verify_peer_name' => true,
-                    'allow_self_signed' => true
-                )
+            $update = $conn->prepare(
+                "UPDATE cliente SET rcvPass_token=?, rcvPass_token_expires=? WHERE Correo=?"
             );
-            $mail->SMTPDebug = 0;
-            $mail->CharSet = 'UTF-8';
-            $mail->Encoding = 'base64';
-            $mail->Host = $_ENV['MAIL_HOST'];
-            $mail->SMTPAuth = true;
-            $mail->Username = $_ENV['MAIL_USERNAME'];
-            $mail->Password = $_ENV['MAIL_PASSWORD'];
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = $_ENV['MAIL_PORT'];
-            $mail->setFrom($_ENV['MAIL_FROM'], $_ENV['MAIL_FROM_NAME']);
-            $mail->addAddress($email);
-            $mail->isHTML(true);
-            $mail->Subject = "🔐 Recuperación de contraseña - DRoca Inmobiliaria";
-            $mail->Body = "
+            $update->bind_param("sss", $token, $expira, $email);
+            $update->execute();
+
+            // Enlace para restablecer
+            $link = "http://localhost/logica/resetPassword.php?token=$token";
+
+            // Enviar correo
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer' => true,
+                        'verify_peer_name' => true,
+                        'allow_self_signed' => true
+                    ]
+                ];
+                $mail->SMTPDebug = 0;
+                $mail->CharSet = 'UTF-8';
+                $mail->Encoding = 'base64';
+                $mail->Host = $_ENV['MAIL_HOST'];
+                $mail->SMTPAuth = true;
+                $mail->Username = $_ENV['MAIL_USERNAME'];
+                $mail->Password = $_ENV['MAIL_PASSWORD'];
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port = $_ENV['MAIL_PORT'];
+                $mail->setFrom($_ENV['MAIL_FROM'], $_ENV['MAIL_FROM_NAME']);
+                $mail->addAddress($email);
+                $mail->isHTML(true);
+                $mail->Subject = "🔐 Recuperación de contraseña - DRoca Inmobiliaria";
+                $mail->Body = "
                 <h2>Solicitud de recuperación de contraseña</h2>
                 <p>Haga clic en el siguiente enlace para restablecer su contraseña:</p>
                 <p><a href='$link'>$link</a></p>
                 <p>Este enlace expirará en 1 hora.</p>
             ";
 
-            $mail->send();
-            echo "<script>alert('✅ Se envió un enlace de recuperación a tu correo.'); window.location='login.php';</script>";
-        } catch (Exception $e) {
-            echo "<script>alert('❌ Error al enviar correo: {$mail->ErrorInfo}');</script>";
+                $mail->send();
+                echo "<script>alert('✅ Se envió un enlace de recuperación a tu correo.'); window.location='login.php';</script>";
+            } catch (Exception $e) {
+                echo "<script>alert('❌ Error al enviar correo.');</script>";
+            }
+        } else {
+            echo "<script>alert('⚠️ El correo no está registrado.');</script>";
         }
-    } else {
-        echo "<script>alert('⚠️ El correo no está registrado.');</script>";
     }
 }
 ?>
@@ -86,7 +116,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <head>
     <meta charset="UTF-8">
     <title>Recuperar Contraseña</title>
-    <style>
+    <style nonce="<?= $CSP_NONCE ?>">
         body {
             background: linear-gradient(135deg, #40baf3ff, #560bad);
             color: black;
@@ -140,6 +170,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <body>
     <form action="recover.php" method="POST">
+        <?php echo csrf_field(); ?>
         <h2>🔑 Recuperar Contraseña</h2>
         <input type="email" name="correo" placeholder="Tu correo registrado" required>
         <button type="submit">Enviar enlace</button><br><br>
