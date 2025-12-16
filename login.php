@@ -11,6 +11,14 @@ if (file_exists(__DIR__ . '/.env')) {
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->safeLoad();
 
+function getEnvVar($key)
+{
+    // Busca en $_ENV (phpdotenv), $_SERVER (servidor) o getenv() (sistema)
+    return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+}
+
+$siteKey = getEnvVar('RECAPTCHA_SITE_KEY');
+
 // Incluir helpers de CSRF
 require_once __DIR__ . '/Logica/csrf_helpers.php';
 csrf_generate_token();
