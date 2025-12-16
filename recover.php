@@ -1,5 +1,7 @@
 <?php
 require 'vendor/autoload.php';
+
+//Rutas de archivos necesarios
 require_once __DIR__ . '/Logica/sql.php';
 require_once __DIR__ . '/Logica/csrf_helpers.php';
 
@@ -27,8 +29,8 @@ header(
     "base-uri 'self'; " .
     "object-src 'none'; " .
     "frame-ancestors 'none'; " .
-    "script-src 'self'; " .                  // No usas JS externo aquí
-    "style-src 'self' 'nonce-{$CSP_NONCE}'; " .   // Usar nonce para estilos inline
+"script-src 'self' 'nonce-{$CSP_NONCE}'; " . 
+    "style-src 'self' 'nonce-{$CSP_NONCE}'; " .  // Usar nonce para estilos inline
     "img-src 'self' data:; " .
     "connect-src 'self'; " .
     "upgrade-insecure-requests"
@@ -39,8 +41,12 @@ if (file_exists(__DIR__ . '/.env')) {
     $dotenv->load();
 }
 
-function getEnvVar($key) {
-    return getenv($key) ?: ($_ENV[$key] ?? '');
+function getEnvVar($key, $default = '') {
+    $val = getenv($key);
+    if ($val !== false && $val !== '') return $val;
+    if (isset($_ENV[$key]) && $_ENV[$key] !== '') return $_ENV[$key];
+    if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') return $_SERVER[$key];
+    return $default;
 }
 
 $conn = Conectarse();
@@ -51,7 +57,7 @@ $dotenv->safeLoad();
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Validar token CSRF
     if (!csrf_validate()) {
-        echo "<script>alert('❌ Token de seguridad inválido. Por favor, intenta nuevamente.');</script>";
+        echo "<script nonce='{$CSP_NONCE}'>alert('❌ Token de seguridad inválido. Por favor, intenta nuevamente.');</script>";
     } else {
         $email = trim($_POST['correo']);
 
@@ -73,10 +79,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $update->execute();
 
             $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-            $domainName = $_SERVER['HTTP_HOST']; // Esto tomará 'droca-seguridad...railway.app'
+            $domainName = $_SERVER['HTTP_HOST'];
             $link = $protocol . $domainName . "/Logica/resetPassword.php?token=$token";
-            // Enlace para restablecer
-            //$link = "http://localhost/logica/resetPassword.php?token=$token";
 
             // Enviar correo
             $mail = new PHPMailer(true);
@@ -84,8 +88,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $mail->isSMTP();
                 $mail->SMTPOptions = [
                     'ssl' => [
-                        'verify_peer' => true,
-                        'verify_peer_name' => true,
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
                         'allow_self_signed' => true
                     ]
                 ];
@@ -100,8 +104,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port = getEnvVar('MAIL_PORT');
 
-                $mail->setFrom($_ENV['MAIL_FROM'], $_ENV['MAIL_FROM_NAME']);
+                $fromName = getEnvVar('MAIL_FROM_NAME', 'Soporte DRoca');
+                $mail->setFrom(getEnvVar('MAIL_FROM'), $fromName);
+
                 $mail->addAddress($email);
+
                 $mail->isHTML(true);
                 $mail->Subject = "🔐 Recuperación de contraseña - DRoca Inmobiliaria";
                 $mail->Body = "
@@ -112,12 +119,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ";
 
                 $mail->send();
-                echo "<script>alert('✅ Se envió un enlace de recuperación a tu correo.'); window.location='login.php';</script>";
+                echo "<script nonce='{$CSP_NONCE}'>alert('✅ Se envió un enlace de recuperación a tu correo.'); window.location='login.php';</script>";
             } catch (Exception $e) {
-                echo "<script>alert('❌ Error al enviar correo.');</script>";
+                error_log("Mailer Error: " . $mail->ErrorInfo);
+                echo "<script nonce='{$CSP_NONCE}'>alert('❌ Error al enviar correo. Intente más tarde.');</script>";
             }
         } else {
-            echo "<script>alert('⚠️ El correo no está registrado.');</script>";
+            echo "<script nonce='{$CSP_NONCE}'>alert('⚠️ El correo no está registrado.');</script>";
         }
     }
 }
