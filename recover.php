@@ -46,7 +46,7 @@ function getEnvVar($key) {
 $conn = Conectarse();
 
 $dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
+$dotenv->safeLoad();
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Validar token CSRF
