@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
 require_once __DIR__ . '/../vendor/autoload.php'; // Nota el "/../" para salir de la carpeta Logica
 use Dotenv\Dotenv;
@@ -9,8 +11,8 @@ if (file_exists(__DIR__ . '/../.env')) {
     $dotenv->safeLoad();
 }
 
-include('sql.php');
-include('CAPTCHA.php');
+require_once __DIR__ . '/sql.php';
+require_once __DIR__ . '/CAPTCHA.php';
 require_once '../SecurityLogger.php';
 require_once __DIR__ . '/csrf_helpers.php';
 
