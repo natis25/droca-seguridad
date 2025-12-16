@@ -13,7 +13,7 @@ if (file_exists(__DIR__ . '/../.env')) {
 
 require_once __DIR__ . '/sql.php';
 require_once __DIR__ . '/CAPTCHA.php';
-require_once '../SecurityLogger.php';
+require_once __DIR__ . '/SecurityLogger.php';
 require_once __DIR__ . '/csrf_helpers.php';
 
 session_start();
