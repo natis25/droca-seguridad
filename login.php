@@ -5,11 +5,17 @@ use Dotenv\Dotenv;
 
 if (file_exists(__DIR__ . '/.env')) {
     $dotenv = Dotenv::createImmutable(__DIR__);
-    $dotenv->load();
+    $dotenv->safeLoad();
 }
 
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->safeLoad();
+function getEnvVar($key)
+{
+    // Busca en $_ENV (phpdotenv), $_SERVER (servidor) o getenv() (sistema)
+    return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
+}
+
+//Obtener la clave del sitio desde las variables de entorno
+$siteKey = getEnvVar('RECAPTCHA_SITE_KEY');
 ?>
 
 <!DOCTYPE html>
@@ -84,39 +90,6 @@ $dotenv->safeLoad();
             color: #007bff;
         }
 
-        /* body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #3a0ca3, #7209b7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
-        }
-        .login-box {
-            background: rgba(255,255,255,0.1);
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-            width: 320px;
-            text-align: center;
-        }
-        input {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 8px;
-        }
-        button {
-            background-color: #4361ee;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-        }*/
-
         a {
             color: #ffd500ff;
             text-decoration: none;
@@ -141,7 +114,11 @@ $dotenv->safeLoad();
         <form action="Logica/procesarLogin.php" method="POST">
             <input type="text" name="usuario" placeholder="Usuario" required>
             <input type="password" name="password" placeholder="Contraseña" required><br>
-            <div class="g-recaptcha" data-sitekey="<?= $_ENV['RECAPTCHA_SITE_KEY'] ?>"></div><br>
+            <?php if (!empty($siteKey)): ?>
+                <div class="g-recaptcha" data-sitekey="<?= $siteKey ?>"></div>
+            <?php else: ?>
+                <p style="color:red">Error: Falta configurar RECAPTCHA_SITE_KEY en Railway</p>
+            <?php endif; ?>
             <button type="submit">Iniciar Sesión</button>
         </form>
         <br><br>

@@ -2,11 +2,16 @@
 require "../vendor/autoload.php";
 use Dotenv\Dotenv;
 
+if (file_exists(__DIR__ . '/../.env')) {
+    $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+    $dotenv->safeLoad();
+}
+
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 $captcha_response = $_POST["g-recaptcha-response"];
-$secretKey = $_ENV["RECAPTCHA_SECRET_KEY"];
+$secretKey = $_ENV["RECAPTCHA_SECRET_KEY"] ?? $_SERVER["RECAPTCHA_SECRET_KEY"] ?? getenv("RECAPTCHA_SECRET_KEY");
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, "https://www.google.com/recaptcha/api/siteverify");
