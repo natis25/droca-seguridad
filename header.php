@@ -37,7 +37,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 $is_osi_area = (strpos($_SERVER['PHP_SELF'], '/OSI/') !== false);
 
 // Determinar la ruta correcta para las imágenes
-$logo_path = $is_osi_area ? '../images/Logo.png' : 'images/Logo.png';
+$logo_path = $is_osi_area ? '../Images/Logo.png' : 'Images/Logo.png';
 $home_path = $is_osi_area ? '../index.php' : 'index.php';
 ?>
 
@@ -241,7 +241,7 @@ $home_path = $is_osi_area ? '../index.php' : 'index.php';
             <?php if (!$is_osi_area): ?>
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="login.php">¿Eres empleado?</a>
+                        <a class="nav-link" href="login.php">Inicio de Sesión</a>
                     </li>
                 </ul>
             <?php endif; ?>
