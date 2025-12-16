@@ -12,47 +12,37 @@ if (file_exists(__DIR__ . '/.env')) {
 
 function Conectarse()
 {
-    // 1. Buscamos las variables en orden: $_ENV (si cargó) -> $_SERVER (servidor) -> getenv (sistema) -> Defecto
-    
-    // Host
-    $host = $_ENV['MYSQLHOST'] ?? $_SERVER['MYSQLHOST'] ?? getenv('MYSQLHOST') 
-            ?? $_ENV['DB_HOST'] ?? $_SERVER['DB_HOST'] ?? getenv('DB_HOST') 
-            ?? 'localhost';
-            
-    // Usuario
-    $user = $_ENV['MYSQLUSER'] ?? $_SERVER['MYSQLUSER'] ?? getenv('MYSQLUSER') 
-            ?? $_ENV['DB_USERNAME'] ?? $_SERVER['DB_USERNAME'] ?? getenv('DB_USERNAME') 
-            ?? 'root';
-            
-    // Password
-    $pass = $_ENV['MYSQLPASSWORD'] ?? $_SERVER['MYSQLPASSWORD'] ?? getenv('MYSQLPASSWORD') 
-            ?? $_ENV['DB_PASSWORD'] ?? $_SERVER['DB_PASSWORD'] ?? getenv('DB_PASSWORD') 
-            ?? ''; 
-            
-    // Base de datos
-    $db   = $_ENV['MYSQLDATABASE'] ?? $_SERVER['MYSQLDATABASE'] ?? getenv('MYSQLDATABASE') 
-            ?? $_ENV['DB_NAME'] ?? $_SERVER['DB_NAME'] ?? getenv('DB_NAME') 
-            ?? 'droca';
-            
-    // Puerto
-    $port = $_ENV['MYSQLPORT'] ?? $_SERVER['MYSQLPORT'] ?? getenv('MYSQLPORT') 
-            ?? $_ENV['DB_PORT'] ?? $_SERVER['DB_PORT'] ?? getenv('DB_PORT') 
-            ?? 3306;
+    // Función auxiliar: Devuelve el primer valor que NO esté vacío
+    $buscarVariable = function($keys, $default) {
+        foreach ($keys as $key) {
+            // 1. Probar getenv (Prioridad Railway)
+            $val = getenv($key);
+            if (!empty($val)) return $val;
 
-    // 2. Conexión
+            // 2. Probar $_ENV y $_SERVER (Prioridad Local)
+            if (!empty($_ENV[$key])) return $_ENV[$key];
+            if (!empty($_SERVER[$key])) return $_SERVER[$key];
+        }
+        return $default;
+    };
+
+    // Usamos la función auxiliar para obtener valores reales
+    $host = $buscarVariable(['MYSQLHOST', 'DB_HOST'], 'localhost');
+    $user = $buscarVariable(['MYSQLUSER', 'DB_USERNAME'], 'root');
+    $pass = $buscarVariable(['MYSQLPASSWORD', 'DB_PASSWORD'], '');
+    $db   = $buscarVariable(['MYSQLDATABASE', 'DB_NAME'], 'droca');
+    $port = $buscarVariable(['MYSQLPORT', 'DB_PORT'], 3306);
+
+    // Conexión
     $link = mysqli_connect($host, $user, $pass, $db, $port);
 
     if (!$link) {
-        // Loguear el error en Railway (no mostrar al usuario)
-        error_log("Error de conexión MySQL: " . mysqli_connect_error());
-        // Puedes descomentar la siguiente línea si quieres ver el error en pantalla mientras pruebas:
-        // echo "Error debug: " . mysqli_connect_error(); 
+        // Log de error interno
+        error_log("Error MySQL: " . mysqli_connect_error());
         return null;
     }
 
-    // Asegurar UTF-8
     mysqli_set_charset($link, "utf8");
-
     return $link;
 }
 
