@@ -85,7 +85,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             // Enviar correo
             $mail = new PHPMailer(true);
             try {
+                set_time_limit(120);
                 $mail->isSMTP();
+
+                $mail->SMTPDebug = 2; // Nivel 2 muestra errores en el LOG de Railway (no en pantalla)
+                $mail->Debugoutput = function($str, $level) {
+                    error_log("SMTP: $str"); // Enviar logs a la consola de Railway
+                };
+
                 $mail->SMTPOptions = [
                     'ssl' => [
                         'verify_peer' => false,
@@ -97,7 +104,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $mail->CharSet = 'UTF-8';
                 $mail->Encoding = 'base64';
 
-                $mail->Host = getEnvVar('MAIL_HOST');
+                $host = getEnvVar('MAIL_HOST');
+                $mail->Host = gethostbyname($host);
+                
                 $mail->SMTPAuth = true;
                 $mail->Username = getEnvVar('MAIL_USERNAME');
                 $mail->Password = getEnvVar('MAIL_PASSWORD');
