@@ -1,6 +1,6 @@
 <?php
 require 'vendor/autoload.php';
-include 'logica/sql.php';
+require_once __DIR__ . 'Logica/sql.php';
 require_once __DIR__ . '/Logica/csrf_helpers.php';
 
 use Dotenv\Dotenv;
@@ -34,6 +34,14 @@ header(
     "upgrade-insecure-requests"
 );
 /* ===================================================================== */
+if (file_exists(__DIR__ . '/.env')) {
+    $dotenv = Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
+
+function getEnvVar($key) {
+    return getenv($key) ?: ($_ENV[$key] ?? '');
+}
 
 $conn = Conectarse();
 
@@ -64,8 +72,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $update->bind_param("sss", $token, $expira, $email);
             $update->execute();
 
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+            $domainName = $_SERVER['HTTP_HOST']; // Esto tomará 'droca-seguridad...railway.app'
+            $link = $protocol . $domainName . "/Logica/resetPassword.php?token=$token";
             // Enlace para restablecer
-            $link = "http://localhost/logica/resetPassword.php?token=$token";
+            //$link = "http://localhost/logica/resetPassword.php?token=$token";
 
             // Enviar correo
             $mail = new PHPMailer(true);
@@ -81,12 +92,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $mail->SMTPDebug = 0;
                 $mail->CharSet = 'UTF-8';
                 $mail->Encoding = 'base64';
-                $mail->Host = $_ENV['MAIL_HOST'];
+
+                $mail->Host = getEnvVar('MAIL_HOST');
                 $mail->SMTPAuth = true;
-                $mail->Username = $_ENV['MAIL_USERNAME'];
-                $mail->Password = $_ENV['MAIL_PASSWORD'];
+                $mail->Username = getEnvVar('MAIL_USERNAME');
+                $mail->Password = getEnvVar('MAIL_PASSWORD');
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port = $_ENV['MAIL_PORT'];
+                $mail->Port = getEnvVar('MAIL_PORT');
+                
                 $mail->setFrom($_ENV['MAIL_FROM'], $_ENV['MAIL_FROM_NAME']);
                 $mail->addAddress($email);
                 $mail->isHTML(true);
