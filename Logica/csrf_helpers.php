@@ -90,7 +90,6 @@ function csrf_validate($redirect_url = null, $error_message = null)
 
 /**
  * Valida el token CSRF y termina la ejecución si es inválido
- * Útil para procesadores que siempre deben validar CSRF
  * 
  * @param string $redirect_url URL a la que redirigir en caso de error
  * @param string|null $error_message Mensaje de error personalizado (opcional)
@@ -102,9 +101,7 @@ function csrf_validate_or_die($redirect_url, $error_message = null)
     }
 }
 
-/**
- * Regenera el token CSRF (útil después de login o cambios importantes)
- */
+//Regenera el token CSRF
 function csrf_regenerate_token()
 {
     csrf_init_session();
